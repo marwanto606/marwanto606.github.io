@@ -1,0 +1,10 @@
+name: Ping Google
+on:
+  schedule:
+    - cron: "30 * * * *"
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send HTTP GET request
+        run: curl https://www.google.com/ping?sitemap=https://www.marwanto606.com/sitemap.xml
