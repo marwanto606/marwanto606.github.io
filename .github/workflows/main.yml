@@ -1,11 +1,9 @@
-# Ping sitemap
 name: Ping Google
 on:
-schedule:
+  schedule:
     - cron: "30 * * * *"
 jobs:
-  ping:
-    name: Ping Google
+  cron:
     runs-on: ubuntu-latest
     steps:
       - name: Send HTTP GET request
