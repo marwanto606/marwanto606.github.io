@@ -281,45 +281,68 @@
     </div>
     
     <script>
-        async function loadArticles() {
-            const jsonUrl = 'https://www.blogger.com/feeds/1362020306851380752/posts/default?alt=json&max-results=99999';
+        function loadArticles() {
+    const script = document.createElement('script');
+    const callbackName = 'bloggerCallback_' + Date.now();
+    
+    window[callbackName] = function(jsonData) {
+        try {
+            const entries = jsonData.feed.entry || [];
             
-            try {
-                const response = await fetch(jsonUrl);
-                const data = await response.json();
-                const jsonData = JSON.parse(data.contents);
-                const entries = jsonData.feed.entry || [];
-                const grid = document.getElementById('articles-list');
-                
-                for (let entry of entries) {
-                    const title = entry.title.$t || 'No title';
-                    const alternateLink = entry.link.find(l => l.rel === 'alternate');
-                    const link = alternateLink ? alternateLink.href : '#';
-                    const pubDate = entry.published.$t || '';
-                    const description = entry.summary ? entry.summary.$t.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : '';
-                    
-                    const formattedDate = new Date(pubDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-                    
-                    const card = document.createElement('a');
-                    card.href = link;
-                    card.className = 'link-card';
-                    card.innerHTML = `
-                        <div class="link-icon">📝</div>
-                        <div class="link-content">
-                            <div class="link-title">${title}</div>
-                            <div class="link-description">${description}</div>
-                            <div class="link-date">${formattedDate}</div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                }
-            } catch (error) {
-                console.error('Error loading articles:', error);
-                document.getElementById('articles-list').innerHTML = '<p>Gagal memuat daftar artikel. Silakan coba lagi nanti.</p>';
+            if (entries.length === 0) {
+                document.getElementById('articles-list').innerHTML = '<p>Tidak ada artikel yang ditemukan.</p>';
+                return;
             }
+            
+            const grid = document.getElementById('articles-list');
+            grid.innerHTML = '';
+            
+            for (let entry of entries) {
+                const title = entry.title.$t || 'No title';
+                const alternateLink = entry.link.find(l => l.rel === 'alternate');
+                const link = alternateLink ? alternateLink.href : '#';
+                const pubDate = entry.published.$t || '';
+                const description = entry.summary ? entry.summary.$t.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : '';
+                
+                const formattedDate = new Date(pubDate).toLocaleDateString('id-ID', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                const card = document.createElement('a');
+                card.href = link;
+                card.className = 'link-card';
+                card.innerHTML = `
+                    <div class="link-icon">📝</div>
+                    <div class="link-content">
+                        <div class="link-title">${title}</div>
+                        <div class="link-description">${description}</div>
+                        <div class="link-date">${formattedDate}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+            
+            // Cleanup
+            document.head.removeChild(script);
+            delete window[callbackName];
+        } catch (error) {
+            console.error('Error processing articles:', error);
+            document.getElementById('articles-list').innerHTML = '<p>Gagal memuat daftar artikel. Silakan coba lagi nanti.</p>';
         }
-        
-        loadArticles();
+    };
+    
+    script.src = `https://www.blogger.com/feeds/1362020306851380752/posts/default?alt=json-in-script&max-results=9999&callback=${callbackName}`;
+    script.onerror = function() {
+        document.getElementById('articles-list').innerHTML = '<p>Gagal memuat daftar artikel. Silakan coba lagi nanti.</p>';
+        delete window[callbackName];
+    };
+    
+    document.head.appendChild(script);
+}
+
+loadArticles();
     </script>
 </body>
 </html>
